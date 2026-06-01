@@ -1,13 +1,15 @@
 # ── Build stage ──────────────────────────────────────────────────────────────
-# Vite 8 uses Rolldown which contains platform-specific native binaries.
-# We therefore run the JS build on the host (npm run build) and copy the
-# resulting dist/ folder into the image, keeping the final image tiny.
-#
-# To rebuild before deploying:
-#   npm install && npm run build
-#   docker build -t quiz-game:latest .
-#   docker stack deploy -c docker-compose.yml quiz
-#
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies and build the app
+COPY package*.json ./
+RUN npm ci
+
+COPY . ./
+RUN npm run build
+
 # ── Serve stage ──────────────────────────────────────────────────────────────
 FROM nginx:1.27-alpine
 
@@ -15,7 +17,7 @@ FROM nginx:1.27-alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the pre-built Vite production bundle
-COPY dist/ /usr/share/nginx/html/
+COPY --from=builder /app/dist/ /usr/share/nginx/html/
 
 # Custom nginx config: SPA fallback + asset caching headers
 COPY nginx.conf /etc/nginx/conf.d/default.conf
