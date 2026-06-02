@@ -1,0 +1,8 @@
+# Exclude build artifacts and local files that are not needed in the build context.
+node_modules
+dist
+.git
+.gitignore
+*.log
+.DS_Store
+README.md
